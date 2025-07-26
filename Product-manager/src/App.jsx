@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Check, Edit2, Image, Package, Plus, X } from 'lucide-react';
+import './App.css';
 
 function App() {
   const [products, setProducts] = useState(() => {
@@ -13,12 +14,7 @@ function App() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    image: '',
-    price: '',
-    info: ''
-  });
+  const [formData, setFormData] = useState({ name: '', image: '', price: '', info: '' });
 
   const resetForm = () => {
     setFormData({ name: '', image: '', price: '', info: '' });
@@ -27,25 +23,22 @@ function App() {
   };
 
   const handleSubmit = () => {
-    if (!formData.name.trim() || !formData.price.trim()) {
-      alert('Please fill required fields name and price');
+    const { name, price, image, info } = formData;
+    if (!name.trim() || !price.trim()) {
+      alert('Please fill required fields: name and price');
       return;
     }
 
-    const parsedPrice = parseFloat(formData.price) || 0;
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice)) {
+      alert('Price must be a valid number');
+      return;
+    }
+
     if (editingId) {
-      setProducts(products.map(product =>
-        product.id === editingId
-          ? { ...formData, id: editingId, price: parsedPrice }
-          : product
-      ));
+      setProducts(products.map(p => (p.id === editingId ? { ...formData, id: editingId, price: parsedPrice } : p)));
     } else {
-      const newProduct = {
-        id: Date.now(),
-        ...formData,
-        price: parsedPrice
-      };
-      setProducts([...products, newProduct]);
+      setProducts([...products, { id: Date.now(), name, image, price: parsedPrice, info }]);
     }
     resetForm();
   };
@@ -56,19 +49,14 @@ function App() {
   };
 
   const handleEdit = (product) => {
-    setFormData({
-      name: product.name,
-      image: product.image,
-      price: product.price.toString(),
-      info: product.info
-    });
+    setFormData({ name: product.name, image: product.image, price: product.price.toString(), info: product.info });
     setEditingId(product.id);
     setShowForm(true);
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete product?')) {
-      setProducts(products.filter(product => product.id !== id));
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      setProducts(products.filter(p => p.id !== id));
     }
   };
 
@@ -77,7 +65,7 @@ function App() {
       <h1 className="heading">Product Card Generator</h1>
       <p className="sub-heading">Create and Manage Beautiful Product Cards</p>
 
-      <button className="btn" onClick={() => setShowForm(true)}>
+      <button className="btn" onClick={() => setShowForm(true)} aria-label="Add New Product">
         <Plus size={20} /> Add New Product
       </button>
 
@@ -85,31 +73,28 @@ function App() {
         <div className="modal" onClick={(e) => e.target === e.currentTarget && resetForm()}>
           <div className="modal-content">
             <h2>{editingId ? 'Edit Product' : 'Add New Product'}</h2>
-
-            <button className="close" onClick={resetForm}>
+            <button className="close" onClick={resetForm} aria-label="Close Form">
               <X size={20} />
             </button>
 
             <input
-              type="text"
               name="name"
+              type="text"
               value={formData.name}
               onChange={handleInputChange}
               placeholder="Product Name"
               required
             />
-
             <input
-              type="url"
               name="image"
+              type="url"
               value={formData.image}
               onChange={handleInputChange}
               placeholder="Image URL (optional)"
             />
-
             <input
-              type="number"
               name="price"
+              type="number"
               value={formData.price}
               onChange={handleInputChange}
               placeholder="Product Price"
@@ -117,13 +102,12 @@ function App() {
               min="0"
               required
             />
-
             <textarea
               name="info"
+              rows={3}
               value={formData.info}
               onChange={handleInputChange}
               placeholder="Product Description (optional)"
-              rows={3}
             />
 
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -152,33 +136,29 @@ function App() {
                     src={product.image}
                     alt={product.name}
                     className="card-image"
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/150?text=No+Image';
-                    }}
+                    onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=No+Image'; }}
                   />
                 ) : (
                   <div className="image-placeholder visible">
                     <Image size={48} />
                   </div>
                 )}
-
                 <div className="card-actions">
-                  <button className="action-btn edit-btn" onClick={() => handleEdit(product)}>
+                  <button className="action-btn edit-btn" onClick={() => handleEdit(product)} aria-label="Edit Product">
                     <Edit2 size={16} />
                   </button>
-                  <button className="action-btn delete-btn" onClick={() => handleDelete(product.id)}>
+                  <button className="action-btn delete-btn" onClick={() => handleDelete(product.id)} aria-label="Delete Product">
                     <X size={16} />
                   </button>
                 </div>
               </div>
-
               <div className="card-content">
                 <h3>{product.name}</h3>
                 <div className="price-value">
                   <p>${product.price.toFixed(2)}</p>
                 </div>
                 {product.info && <p className="info">{product.info}</p>}
-                <button>Add to Cart</button>
+                <button aria-label={`Add ${product.name} to Cart`}>Add to Cart</button>
               </div>
             </div>
           ))}
